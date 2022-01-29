@@ -54,8 +54,9 @@ def text_list_handler(state, event, values, window, time):
     if event == '-TEXT LIST-' and len(state['source_content']) > 0:
         # init selected
         content = values[event][0]
-        state['selected']['index'] = state['source_content'].index(content)
-        state['selected']['content'] = content
+        content_idx = state['shown_source_content'].index(content)
+        state['selected']['index'] = content_idx
+        state['selected']['content'] = state['source_content'][content_idx]
         idx = state['selected']['index']
         name = voice_file_name(idx)
         exists = os.path.exists(name)
@@ -73,16 +74,18 @@ def record_btn_handler(state, event, values, window, time, record: Recorder):
         file_path = voice_file_name(idx)
         if not record.is_recording:
             record.beginrec(file_path)
-            state['shown_source_content'][idx] += '(recording...)'
+            state['shown_source_content'][idx] = str(state['shown_source_content'][idx]).split(' ')[0] \
+                                                 + ' (recording...)'
         else:
             record.stoprec(file_path)
             state['selected']['path'] = file_path
             file_name = file_name_prefix + str(idx)
             state['wav_list'][file_name] = state['selected']['content']
-            state['shown_source_content'][idx] += '(done)'
+            state['shown_source_content'][idx] = str(state['shown_source_content'][idx]).split(' ')[0] + ' (done)'
         text_list = state['shown_source_content']
         window.Element('-TEXT LIST-').update(values=text_list)
 
+        window.Element('-TEXT LIST-')
 
 
 def play_btn_handler(state, event, values, window, time, record: Recorder):
@@ -95,7 +98,7 @@ def play_btn_handler(state, event, values, window, time, record: Recorder):
 def dump_btn_handler(state, event, values, window, time, record: Recorder):
     if event == '-Dump-':
         wav_list = sorted(state['wav_list'].items(), key=lambda item: int(str(item[0]).split('_')[1]))
-        with open('res/result/result.txt', 'w', encoding='utf-8') as f:
-            wl = [k + '	' + v for k, v in wav_list]
+        with open('res/result/Trans.txt', 'w', encoding='utf-8') as f:
+            wl = [k + '.wav	' + v for k, v in wav_list]
             f.writelines(wl)
             print('finish dump')
